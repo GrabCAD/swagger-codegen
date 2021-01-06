@@ -269,10 +269,19 @@ namespace {{packageName}}.Client
         /// <returns>FileParameter.</returns>
         public FileParameter ParameterToFile(string name, Stream stream)
         {
+            var fp = new FileParameter
+            {
+                ContentLength = stream.Length,
+                Writer = outStream => {
+                    stream.CopyTo(outStream);
+                },
+                Name = name
+            };
             if (stream is FileStream)
-                return FileParameter.Create(name, ReadAsBytes(stream), Path.GetFileName(((FileStream)stream).Name));
+                fp.FileName = Path.GetFileName(((FileStream)stream).Name);
             else
-                return FileParameter.Create(name, ReadAsBytes(stream), "no_file_name_provided");
+                fp.FileName = "no_file_name_provided";
+            return fp;
         }
 
         /// <summary>
