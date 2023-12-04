@@ -439,11 +439,7 @@ class ApiClient(object):
         :param files: File parameters.
         :return: Form parameters with files.
         """
-        params = []
-
-        if post_params:
-            params = post_params
-
+        params = post_params if post_params else []
         if files:
             for k, v in six.iteritems(files):
                 if not v:
@@ -455,8 +451,7 @@ class ApiClient(object):
                         filedata = f.read()
                         mimetype = (mimetypes.guess_type(filename)[0] or
                                     'application/octet-stream')
-                        params.append(
-                            tuple([k, tuple([filename, filedata, mimetype])]))
+                        params.append((k, (filename, filedata, mimetype)))
 
         return params
 
@@ -503,8 +498,7 @@ class ApiClient(object):
             return
 
         for auth in auth_settings:
-            auth_setting = self.configuration.auth_settings().get(auth)
-            if auth_setting:
+            if auth_setting := self.configuration.auth_settings().get(auth):
                 if not auth_setting['value']:
                     continue
                 elif auth_setting['in'] == 'header':
@@ -529,8 +523,7 @@ class ApiClient(object):
         os.close(fd)
         os.remove(path)
 
-        content_disposition = response.getheader("Content-Disposition")
-        if content_disposition:
+        if content_disposition := response.getheader("Content-Disposition"):
             filename = re.search(r'filename=[\'"]?([^\'"\s]+)[\'"]?',
                                  content_disposition).group(1)
             path = os.path.join(os.path.dirname(path), filename)
@@ -634,7 +627,6 @@ class ApiClient(object):
                 if key not in klass.swagger_types:
                     instance[key] = value
         if self.__hasattr(instance, 'get_real_child_model'):
-            klass_name = instance.get_real_child_model(data)
-            if klass_name:
+            if klass_name := instance.get_real_child_model(data):
                 instance = self.__deserialize(data, klass_name)
         return instance
